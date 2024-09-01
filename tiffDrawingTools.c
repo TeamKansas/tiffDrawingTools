@@ -1,3 +1,18 @@
+/*
+This library generates tiff format images without any compression;
+to create a image buffer structure:
+	screen *sp = sopen(int width, int height);
+to write data to a file:
+	writeFile(char *filename, screen *structurePointer);
+to free all memory used by the structure:
+ 	sclose(screen *structurePointer);
+
+NOTE: This program works for LITTLE ENDIAN images. If you want to make an image that opens on a big endian machine, go to line 175 and change the "II" to "MM"
+NOTE: the drawing functions come in several formats: CONVENIENT, and STANDARD. 
+	STANDARD format pixel ranges start at 0 and end at the the width or length of the image.
+ 	CONVENIENT format pixel ranges from -1.0 to 1.0
+*/
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,7 +31,7 @@ struct screen {   // image data entity
 } typedef screen;
 
 
-void drawPixel(screen *s, double x, double y) {  // paint one pixel
+void drawPixel(screen *s, double x, double y) {  // paint one pixel. format: CONVENIENT
 	if(y > 1 || x > 1 || x < -1 || y < -1)
 		return;
 	int b = (s->w)*3*((int)((y+1)*(s->l/2))) + 3*((int)((x+1)*(s->w/2)));
@@ -25,7 +40,7 @@ void drawPixel(screen *s, double x, double y) {  // paint one pixel
 	s->dat[b+2] = s->b;
 }
 
-void setPixel(screen *s, int x, int y) {
+void setPixel(screen *s, int x, int y) { // paint one pixel. format: STANDARD
 	int b = y*(s->w)*3 + x*3;
 	s->dat[b]   = s->r;
 	s->dat[b+1] = s->g;
@@ -38,7 +53,7 @@ void setPixelWithColor(screen *s, int x, int y, uint8_t r, uint8_t g, uint8_t b)
 	s->dat[d+2] = b;
 }
 
-void drawCircle(screen *s, double px, double py, double r) { // paint a circle
+void drawCircle(screen *s, double px, double py, double r) { // paint a circle. format CONVENIENT
 	int fx = ((px+1)*(s->w/2.0));
 	int fy = ((py+1)*(s->l/2.0));
 	int ir = r*(s->w/2.0);
@@ -64,7 +79,7 @@ void setColor(screen *s, int r, int g, int b) {   // change the current color of
 	s->b = b;
 }
 
-void drawLine2d(screen *s, int px1, int py1, int px2, int py2) {
+void drawLine2d(screen *s, int px1, int py1, int px2, int py2) { // format: STANDARD
 	int x1 = px1 < px2 ? (px1) : (px2);
 	int x2 = px1 < px2 ? (px2) : (px1);
 	int y1 = px1 < px2 ? (py1) : (py2);
@@ -97,11 +112,11 @@ void drawLine2d(screen *s, int px1, int py1, int px2, int py2) {
 		}
 	}
 }
-void drawLine(screen *s, double px1, double py1, double px2, double py2) {
+void drawLine(screen *s, double px1, double py1, double px2, double py2) { // format: CONVENIENT
 	drawLine2d(s, (px1+1)*(s->w/2.0),(py1+1)*(s->l/2.0),(px2+1)*(s->w/2.0),(py2+1)*(s->l/2.0));
 }
 
-void drawSquare(screen *s, double px1, double py1, double px2, double py2) {
+void drawSquare(screen *s, double px1, double py1, double px2, double py2) { // format CONVENIENT
 	int x1 = px1 < px2 ? ((px1+1)*(s->w/2.0)) : ((px2+1)*(s->w/2.0));
 	int x2 = px1 < px2 ? ((px2+1)*(s->w/2.0)) : ((px1+1)*(s->w/2.0));
 	int y1 = py1 < py2 ? ((py1+1)*(s->l/2.0)) : ((py2+1)*(s->l/2.0));
@@ -160,7 +175,7 @@ void writeHeader(FILE *fp, int w, int l) {
 	uint16_t bytes_2 = 42;
 	uint32_t bytes_4 = 8;
 	// header
-	fwrite("II",1,2,fp);         // 0-1
+	fwrite("II",1,2,fp);         // 0-1 "II" for LITTLE ENDIAN, and "MM" for BIG ENDIAN
 	fwrite(&bytes_2,2,1,fp);  // 2-3
 	fwrite(&bytes_4,4,1,fp);  // 4-7 offset of first ifd (8)
 	
