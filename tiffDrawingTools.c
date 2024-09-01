@@ -3,13 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define BIG_ENDIAN "MM"
-#define LITTLE_ENDIAN "II"
-
-#ifndef ENDIAN_TYPE
-#define ENDIAN_TYPE LITTLE_ENDIAN
-#endif
-
 #define SHORT 3
 #define LONG 4
 #define RATIONAL 5
@@ -167,7 +160,7 @@ void writeHeader(FILE *fp, int w, int l) {
 	uint16_t bytes_2 = 42;
 	uint32_t bytes_4 = 8;
 	// header
-	fwrite(ENDIAN_TYPE,1,2,fp);         // 0-1
+	fwrite("II",1,2,fp);         // 0-1
 	fwrite(&bytes_2,2,1,fp);  // 2-3
 	fwrite(&bytes_4,4,1,fp);  // 4-7 offset of first ifd (8)
 	
